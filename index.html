@@ -20,9 +20,10 @@
             color: #1a1a1a;
         }
 
+        /* 打字機專用等寬字體 */
         .typewriter-text {
-            font-family: 'Courier Prime', 'Noto Serif TC', monospace;
-            border-right: 2px solid #b91c1c;
+            font-family: 'Courier Prime', 'Courier New', 'Noto Sans Mono CJK TC', 'Microsoft JhengHei Mono', monospace;
+            border-right: 3px solid #b91c1c;
             white-space: pre-wrap;
             animation: blink 0.75s step-end infinite;
         }
@@ -87,7 +88,7 @@
                 <span>號外號外 • 特刊</span>
                 <!-- 日期與「下一天」調整按鈕 -->
                 <div class="flex items-center gap-3 bg-[#eae1cc] px-3 py-1 rounded border border-black/20 shadow-sm">
-                    <span id="current-date" class="tracking-wide">民國三十五年 六月二十五日</span>
+                    <span id="current-date" class="tracking-wide">第一天</span>
                     <button id="next-day-btn" onclick="nextDay()" class="bg-red-800 text-white hover:bg-black transition-colors px-2 py-0.5 text-xs font-bold border border-black shadow-sm flex items-center gap-1">
                         下一天 ➔
                     </button>
@@ -118,7 +119,7 @@
                     <input type="number" id="total-players" value="10" min="1" max="40" class="w-full bg-[#fbf7ee] border border-black px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-red-700">
                 </div>
                 <div>
-                    <label class="block text-sm font-bold mb-2">2. 排除無人入座的號碼 (以逗號隔開)：</label>
+                    <label class="block text-sm font-bold mb-2">2. 排除無人入座的號碼：</label>
                     <input type="text" id="exclude-seats" placeholder="例如: 3, 7" class="w-full bg-[#fbf7ee] border border-black px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-red-700">
                 </div>
                 <div class="flex items-end">
@@ -142,8 +143,8 @@
                     <p class="text-xs text-gray-700 mb-4 italic">※ 點擊座號按鈕可發動搜查。一經發動即於下方檔案蓋上「死亡出局」印信，並伴隨局勢播報。</p>
                 </div>
 
-                <!-- 玩家座號按鈕網格 -->
-                <div id="seats-container" class="grid grid-cols-4 sm:grid-cols-5 gap-3 overflow-y-auto max-h-[350px] p-1">
+                <!-- 玩家座號按鈕網格 (優化為大螢幕下自動貼合並向兩端拉伸排版) -->
+                <div id="seats-container" class="grid grid-cols-[repeat(auto-fill,minmax(75px,1fr))] gap-3 overflow-y-auto max-h-[350px] p-1 w-full justify-items-stretch">
                     <!-- 動態生成按鈕 -->
                 </div>
 
@@ -180,7 +181,7 @@
                         <span class="text-xs text-gray-500">歷史存檔</span>
                     </h4>
                     
-                    <div id="history-log" class="overflow-y-auto max-h-[220px] flex-grow space-y-2 pr-2 text-sm font-semibold">
+                    <div id="history-log" class="overflow-y-auto max-h-[220px] flex-grow space-y-2 pr-2 text-sm font-semibold" style="font-family: 'Courier Prime', 'Courier New', 'Noto Sans Mono CJK TC', monospace;">
                         <div class="text-gray-500 italic">尚未有任何通訊傳出。</div>
                     </div>
                 </div>
@@ -311,14 +312,14 @@
         let excludedSeats = [];
         let typewriterInterval = null;
 
-        // 日期推進狀態控制（自民國35年 6月25日開始，限制最多＋4天）
+        // 日期推進狀態控制（改為純天數標示，限制最多＋4天，即第一天到第五天）
         let dayOffset = 0;
         const timeline = [
-            "民國三十五年 六月二十五日",
-            "民國三十五年 六月二十六日 (局勢第一日)",
-            "民國三十五年 六月二十七日 (局勢第二日)",
-            "民國三十五年 六月二十八日 (局勢第三日)",
-            "民國三十五年 六月二十九日 (局勢第四日)"
+            "第一天",
+            "第二天",
+            "第三天",
+            "第四天",
+            "第五天"
         ];
 
         // 劇本殺特色 AI 播報句庫 (模擬多樣化文風)
@@ -388,8 +389,8 @@
                 const dayEntry = document.createElement('div');
                 dayEntry.className = 'border-b border-dashed border-red-800/40 pb-2 mb-2 bg-red-800/10 p-2 rounded-sm transition-colors text-center';
                 dayEntry.innerHTML = `
-                    <span class="text-xs bg-red-800 text-white font-mono px-2 py-0.5 rounded-sm font-bold">歷史新頁</span>
-                    <strong class="text-red-900 ml-2 text-sm">【時光推進】${timeline[dayOffset]}</strong>
+                    <span class="text-xs bg-red-800 text-white font-mono px-2 py-0.5 rounded-sm font-bold">時局變遷</span>
+                    <strong class="text-red-900 ml-2 text-sm">【時光推進】已進入 ${timeline[dayOffset]}</strong>
                 `;
                 historyContainer.insertBefore(dayEntry, historyContainer.firstChild);
             }
@@ -409,7 +410,7 @@
             } else {
                 nextBtn.disabled = false;
                 nextBtn.className = "bg-red-800 text-white hover:bg-black transition-colors px-2 py-0.5 text-xs font-bold border border-black shadow-sm flex items-center gap-1";
-                nextBtn.innerText = `下一天 (＋${dayOffset + 1})`;
+                nextBtn.innerText = `下一天 ➔`;
             }
         }
 
@@ -421,7 +422,7 @@
             players.forEach(player => {
                 const button = document.createElement('div');
                 button.id = `seat-card-${player.id}`;
-                button.className = `relative aspect-square border-2 border-black flex flex-col items-center justify-center cursor-pointer transition-all duration-150 select-none bg-[#fbf7ee] hover:bg-neutral-200 active:scale-95 shadow-sm`;
+                button.className = `relative aspect-square border-2 border-black flex flex-col items-center justify-center cursor-pointer transition-all duration-150 select-none bg-[#fbf7ee] hover:bg-neutral-200 active:scale-95 shadow-sm w-full`;
                 button.onclick = () => handlePlayerDeath(player.id);
 
                 button.innerHTML = `
