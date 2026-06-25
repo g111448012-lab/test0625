@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>二二八劇本殺：風平浪靜下的暗潮湧動</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for retro typewriter and newspaper feel -->
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400;1,700&family=Noto+Serif+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        /* 復古報紙質感背景與字體 */
+        body {
+            background-color: #e6dfd3;
+            background-image: 
+                radial-gradient(rgba(0,0,0,0.05) 1px, transparent 0),
+                radial-gradient(rgba(0,0,0,0.08) 2px, transparent 0);
+            background-size: 8px 8px, 16px 16px;
+            font-family: 'Noto Serif TC', serif;
+            color: #1a1a1a;
+        }
+
+        .typewriter-text {
+            font-family: 'Courier Prime', 'Noto Serif TC', monospace;
+            border-right: 2px solid #b91c1c;
+            white-space: pre-wrap;
+            animation: blink 0.75s step-end infinite;
+        }
+
+        @keyframes blink {
+            from, to { border-color: transparent }
+            50% { border-color: #b91c1c; }
+        }
+
+        /* 舊報紙風的框線 */
+        .newspaper-border-heavy {
+            border: 4px double #1a1a1a;
+        }
+        .newspaper-border-thin {
+            border-top: 1px solid #1a1a1a;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        /* 印章動畫效果 */
+        .stamp {
+            transform: scale(3) rotate(-15deg);
+            opacity: 0;
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .stamp.stamped {
+            opacity: 0.85;
+            transform: scale(1) rotate(-12deg);
+        }
+
+        /* 復古噪點半透明遮罩 */
+        .vintage-overlay {
+            pointer-events: none;
+            background: radial-gradient(circle, transparent 50%, rgba(0,0,0,0.15) 100%);
+        }
+
+        /* 捲軸美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #dcd4c4;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #a89f8d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8e8472;
+        }
+    </style>
+</head>
+<body class="relative min-h-screen p-4 md:p-8 flex flex-col justify-between overflow-x-hidden selection:bg-red-800 selection:text-white">
+    
+    <!-- 復古光影氛圍遮罩 -->
+    <div class="fixed inset-0 vintage-overlay z-40"></div>
+
+    <div class="max-w-7xl mx-auto w-full bg-[#f2ebd9] p-6 md:p-10 shadow-2xl newspaper-border-heavy relative z-10 flex flex-col justify-between min-h-[90vh]">
+        
+        <!-- 頂部報頭區 (Newspaper Header) -->
+        <header class="text-center mb-8">
+            <div class="flex flex-col sm:flex-row justify-between items-center text-xs md:text-sm border-b-2 border-black pb-2 px-1 font-bold gap-3">
+                <span>號外號外 • 特刊</span>
+                <!-- 日期與「下一天」調整按鈕 -->
+                <div class="flex items-center gap-3 bg-[#eae1cc] px-3 py-1 rounded border border-black/20 shadow-sm">
+                    <span id="current-date" class="tracking-wide">民國三十五年 六月二十五日</span>
+                    <button id="next-day-btn" onclick="nextDay()" class="bg-red-800 text-white hover:bg-black transition-colors px-2 py-0.5 text-xs font-bold border border-black shadow-sm flex items-center gap-1">
+                        下一天 ➔
+                    </button>
+                </div>
+                <span>密級：特種絕對機密</span>
+            </div>
+            
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-widest text-black mt-6 mb-2 font-black">
+                二二八劇本殺
+            </h1>
+            
+            <div class="newspaper-border-thin py-2 my-4">
+                <p class="text-xl md:text-2xl tracking-wider text-red-900 font-bold italic">
+                    ── 風平浪靜下的暗潮湧動 ──
+                </p>
+            </div>
+        </header>
+
+        <!-- 初始設定面板：人數設定區 (在遊戲開始前顯示) -->
+        <div id="setup-panel" class="bg-[#e2d8c2] border border-black p-6 rounded-sm mb-8">
+            <h3 class="text-lg font-bold border-b border-black pb-2 mb-4 flex items-center">
+                <span class="w-3 h-3 bg-red-700 rounded-full inline-block mr-2 animate-ping"></span>
+                人數設定
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm font-bold mb-2">1. 設定玩家總人數 (座號 1 起算)：</label>
+                    <input type="number" id="total-players" value="10" min="1" max="40" class="w-full bg-[#fbf7ee] border border-black px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-red-700">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold mb-2">2. 排除無人入座的號碼 (以逗號隔開)：</label>
+                    <input type="text" id="exclude-seats" placeholder="例如: 3, 7" class="w-full bg-[#fbf7ee] border border-black px-3 py-2 text-center text-lg font-bold focus:outline-none focus:ring-1 focus:ring-red-700">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="startGame()" class="w-full bg-black text-white hover:bg-red-800 transition-colors py-2 px-4 font-bold border border-black shadow-md flex items-center justify-center gap-2">
+                        <span>開啟調查局勢 ➔</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 遊戲主畫面 (預設隱藏，開始後顯示) -->
+        <div id="game-panel" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-8 flex-grow">
+            
+            <!-- 左側：座號名冊與蓋印章區域 (5/12 寬) -->
+            <div class="lg:col-span-5 flex flex-col border-r-0 lg:border-r border-black pr-0 lg:pr-8">
+                <div class="mb-4">
+                    <h2 class="text-2xl font-black border-b-2 border-black pb-2 mb-4 flex justify-between items-center">
+                        <span>名冊狀態名錄</span>
+                        <span class="text-sm font-bold bg-black text-white px-2 py-0.5" id="alive-counter">存活: 0/0</span>
+                    </h2>
+                    <p class="text-xs text-gray-700 mb-4 italic">※ 點擊座號按鈕可發動搜查。一經發動即於下方檔案蓋上「死亡出局」印信，並伴隨局勢播報。</p>
+                </div>
+
+                <!-- 玩家座號按鈕網格 -->
+                <div id="seats-container" class="grid grid-cols-4 sm:grid-cols-5 gap-3 overflow-y-auto max-h-[350px] p-1">
+                    <!-- 動態生成按鈕 -->
+                </div>
+
+                <!-- 重設按鈕與微調 -->
+                <div class="mt-auto pt-6 border-t border-black border-dashed flex justify-between items-center">
+                    <span class="text-xs text-gray-600">主持專用機密密檔</span>
+                    <button onclick="resetSetup()" class="text-xs border border-red-800 text-red-800 hover:bg-red-800 hover:text-white transition-all px-3 py-1 font-bold">
+                        重設新戰局
+                    </button>
+                </div>
+            </div>
+
+            <!-- 右側：報紙主要版面及打字機動態顯示 (7/12 寬) -->
+            <div class="lg:col-span-7 flex flex-col justify-between">
+                
+                <!-- 號外特報 (大標) -->
+                <div class="border-2 border-red-800 p-4 bg-[#f9f5eb] relative overflow-hidden mb-6 shadow-sm">
+                    <div class="absolute -right-4 -bottom-4 text-red-100 font-bold text-7xl select-none pointer-events-none">CONFIDENTIAL</div>
+                    <h3 class="text-red-800 text-lg font-black tracking-widest border-b border-red-800 pb-1 mb-2">【特報 • 局勢最新演變】</h3>
+                    
+                    <!-- 打字機文字輸出容器 -->
+                    <div class="min-h-[140px] flex items-start">
+                        <span class="text-red-900 font-bold mr-1">》</span>
+                        <div id="ai-output" class="typewriter-text text-base md:text-lg font-bold leading-relaxed text-neutral-800">
+                            等待歷史巨輪啟動。請點擊左側座號，以揭示暗潮湧動之下的命運結局...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 實時狀態歷史紀錄 - 報紙公告欄樣式 -->
+                <div class="flex-grow flex flex-col justify-between bg-[#fbf7ee] p-4 border border-black">
+                    <h4 class="text-md font-bold tracking-wider text-black border-b border-black pb-1 mb-3 flex items-center justify-between">
+                        <span>■ 治安全省大事紀（歷史公告欄）</span>
+                        <span class="text-xs text-gray-500">歷史存檔</span>
+                    </h4>
+                    
+                    <div id="history-log" class="overflow-y-auto max-h-[220px] flex-grow space-y-2 pr-2 text-sm font-semibold">
+                        <div class="text-gray-500 italic">尚未有任何通訊傳出。</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 頁尾底欄 -->
+        <footer class="mt-8 border-t border-black pt-4 text-center text-xs text-gray-700 flex flex-col md:flex-row justify-between items-center gap-2">
+            <div>
+                <span>本報由 <strong>「歷史真相調查局」</strong> 督印發行</span>
+            </div>
+            <div class="flex gap-4">
+                <span>電報代碼：0228</span>
+                <span>密級：特種絕對機密</span>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- 蓋印章全螢幕動畫與音效模擬 Overlay (當按下按鈕時快速閃過) -->
+    <div id="stamp-modal" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center pointer-events-none opacity-0 transition-opacity duration-200">
+        <div class="bg-white p-12 border-8 border-red-800 rounded-sm shadow-2xl relative transform scale-75 transition-transform duration-300 flex flex-col items-center">
+            <span class="text-gray-400 text-xs tracking-widest uppercase mb-2">STAMP CERTIFIED</span>
+            <div id="modal-stamp-text" class="text-red-700 text-6xl md:text-8xl font-black tracking-widest border-4 border-red-700 px-6 py-3 rounded-md transform rotate-[-8deg] shadow-lg animate-ping">
+                死亡
+            </div>
+            <div class="mt-6 text-black font-black text-xl md:text-2xl" id="modal-desc-text">
+                3 號玩家 已確認出局
+            </div>
+        </div>
+    </div>
+
+    <!-- 音效控制 (採用 Web Audio API 模擬打字機與蓋章聲，不需外部資源) -->
+    <script>
+        // Web Audio API 聲效產生器
+        const AudioFX = {
+            ctx: null,
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            },
+            // 模擬打字機喀噠聲
+            playTypewriter() {
+                this.init();
+                const ctx = this.ctx;
+                
+                const bufferSize = ctx.sampleRate * 0.05; // 0.05秒的短促聲音
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1000;
+                filter.Q.value = 5;
+
+                const gain = ctx.createGain();
+                gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.04);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(ctx.destination);
+
+                noise.start();
+            },
+            // 模擬沉重的蓋印章砰一聲
+            playStamp() {
+                this.init();
+                const ctx = this.ctx;
+                
+                // 低頻衝擊
+                const osc = ctx.createOscillator();
+                const gainOsc = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(10, ctx.currentTime + 0.15);
+                
+                gainOsc.gain.setValueAtTime(0.8, ctx.currentTime);
+                gainOsc.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                
+                osc.connect(gainOsc);
+                gainOsc.connect(ctx.destination);
+                
+                // 白噪音摩擦（紙張印章撞擊）
+                const bufferSize = ctx.sampleRate * 0.2;
+                const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+                
+                const noise = ctx.createBufferSource();
+                noise.buffer = buffer;
+                
+                const filter = ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 400;
+                
+                const gainNoise = ctx.createGain();
+                gainNoise.gain.setValueAtTime(0.4, ctx.currentTime);
+                gainNoise.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.18);
+                
+                noise.connect(filter);
+                filter.connect(gainNoise);
+                gainNoise.connect(ctx.destination);
+                
+                osc.start();
+                noise.start();
+                osc.stop(ctx.currentTime + 0.2);
+                noise.stop(ctx.currentTime + 0.2);
+            }
+        };
+    </script>
+
+    <!-- 遊戲主要邏輯控制 -->
+    <script>
+        // 狀態管理
+        let players = [];
+        let totalCount = 10;
+        let excludedSeats = [];
+        let typewriterInterval = null;
+
+        // 日期推進狀態控制（自民國35年 6月25日開始，限制最多＋4天）
+        let dayOffset = 0;
+        const timeline = [
+            "民國三十五年 六月二十五日",
+            "民國三十五年 六月二十六日 (局勢第一日)",
+            "民國三十五年 六月二十七日 (局勢第二日)",
+            "民國三十五年 六月二十八日 (局勢第三日)",
+            "民國三十五年 六月二十九日 (局勢第四日)"
+        ];
+
+        // 劇本殺特色 AI 播報句庫 (模擬多樣化文風)
+        const deathSentences = [
+            "黑夜籠罩著街道，細雨悄悄洗刷血跡。{id}號已被局勢無情吞噬，就此銷聲匿跡。",
+            "在不為人知的弄堂盡頭，傳出了一聲悶響。{id}號的檔案已化為灰燼，查無此人。",
+            "風平浪靜的面紗被無情揭開，警哨聲在霧氣中響起──{id}號被判定出局，無法再發聲。",
+            "一份蓋有特種機密的逮捕令執行完畢。{id}號玩家確認除名，時代的塵埃終究落在了肩頭。",
+            "在最深的陰影中，盟約悄然破裂。{id}號未能看見明天的朝陽，遺留下的信件已被燒毀。",
+            "警備總部的名單上，{id}號的名字被狠狠用紅筆劃去。暗流之中，又少了一個尋找真相的人。",
+            "茶館的座位空了。{id}號留下了一杯未喝完的茶與半張報紙，便再也沒有回來。",
+            "暗湧終於演變成狂濤，{id}號在歷史的十字路口被強行帶離。此局，出局。"
+        ];
+
+        // 1. 開啟戰局
+        function startGame() {
+            const totalInput = document.getElementById('total-players').value;
+            const excludeInput = document.getElementById('exclude-seats').value;
+
+            totalCount = parseInt(totalInput) || 10;
+            
+            // 解析排除名單
+            excludedSeats = excludeInput.split(',')
+                .map(s => parseInt(s.trim()))
+                .filter(num => !isNaN(num) && num >= 1 && num <= totalCount);
+
+            // 初始化玩家列表
+            players = [];
+            for (let i = 1; i <= totalCount; i++) {
+                if (!excludedSeats.includes(i)) {
+                    players.push({
+                        id: i,
+                        alive: true
+                    });
+                }
+            }
+
+            // UI 渲染切換
+            document.getElementById('setup-panel').classList.add('hidden');
+            document.getElementById('game-panel').classList.remove('hidden');
+
+            // 渲染座號按鈕
+            renderSeats();
+            updateCounters();
+            updateDateDisplay();
+
+            // 首發電報
+            triggerTypewriter("電報急件：調查局勢正式開啟。風平浪靜的外表下暗潮洶湧，各界人士請謹慎行事，提防身邊隱匿的雙眼...");
+        }
+
+        // 推進日期函數 (最多至 +4)
+        function nextDay() {
+            if (dayOffset < 4) {
+                dayOffset++;
+                updateDateDisplay();
+                AudioFX.playStamp(); // 播放印章般沉重的震動音，代表時間巨輪推進
+                
+                // 觸發打字機播報日期更新
+                triggerTypewriter(`【日誌更新】時間流逝，形勢已發生遽變。時局進入了「${timeline[dayOffset]}」。城裡的盤查更為嚴厲，恐慌在悄悄蔓延...`);
+                
+                // 寫入歷史公告
+                const historyContainer = document.getElementById('history-log');
+                if (historyContainer.querySelector('.text-gray-500')) {
+                    historyContainer.innerHTML = '';
+                }
+
+                const dayEntry = document.createElement('div');
+                dayEntry.className = 'border-b border-dashed border-red-800/40 pb-2 mb-2 bg-red-800/10 p-2 rounded-sm transition-colors text-center';
+                dayEntry.innerHTML = `
+                    <span class="text-xs bg-red-800 text-white font-mono px-2 py-0.5 rounded-sm font-bold">歷史新頁</span>
+                    <strong class="text-red-900 ml-2 text-sm">【時光推進】${timeline[dayOffset]}</strong>
+                `;
+                historyContainer.insertBefore(dayEntry, historyContainer.firstChild);
+            }
+        }
+
+        // 更新日期顯示與按鈕狀態
+        function updateDateDisplay() {
+            const dateSpan = document.getElementById('current-date');
+            const nextBtn = document.getElementById('next-day-btn');
+            
+            dateSpan.innerText = timeline[dayOffset];
+            
+            if (dayOffset >= 4) {
+                nextBtn.disabled = true;
+                nextBtn.className = "bg-neutral-400 text-neutral-700 px-2 py-0.5 text-xs font-bold border border-neutral-500 shadow-sm cursor-not-allowed";
+                nextBtn.innerText = "已至最後一日";
+            } else {
+                nextBtn.disabled = false;
+                nextBtn.className = "bg-red-800 text-white hover:bg-black transition-colors px-2 py-0.5 text-xs font-bold border border-black shadow-sm flex items-center gap-1";
+                nextBtn.innerText = `下一天 (＋${dayOffset + 1})`;
+            }
+        }
+
+        // 2. 渲染座號名冊
+        function renderSeats() {
+            const container = document.getElementById('seats-container');
+            container.innerHTML = '';
+
+            players.forEach(player => {
+                const button = document.createElement('div');
+                button.id = `seat-card-${player.id}`;
+                button.className = `relative aspect-square border-2 border-black flex flex-col items-center justify-center cursor-pointer transition-all duration-150 select-none bg-[#fbf7ee] hover:bg-neutral-200 active:scale-95 shadow-sm`;
+                button.onclick = () => handlePlayerDeath(player.id);
+
+                button.innerHTML = `
+                    <span class="text-xs font-bold text-gray-500 absolute top-1 left-2">NO.</span>
+                    <span class="text-3xl font-black tracking-tighter mt-1">${player.id}</span>
+                    <!-- 蓋印章圖片替代（純CSS精美蓋印章） -->
+                    <div id="stamp-${player.id}" class="stamp absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                        <div class="border-4 border-red-700 bg-[#f2ebd9]/90 text-red-700 font-extrabold text-base px-2 py-0.5 rounded transform rotate-[-12deg] tracking-wider shadow-md">
+                            【死亡出局】
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(button);
+            });
+        }
+
+        // 3. 點擊座號按鈕觸發死亡
+        function handlePlayerDeath(id) {
+            const player = players.find(p => p.id === id);
+            if (!player) return;
+
+            // 如果已經出局，不重複執行
+            if (!player.alive) {
+                triggerTypewriter(`局勢急報：${id}號玩家早已確認失去聯繫，切勿重複搜查其下落。`);
+                return;
+            }
+
+            // 更新狀態
+            player.alive = false;
+            updateCounters();
+
+            // 播放印章音效與視覺特效
+            AudioFX.playStamp();
+            showStampAnimation(id);
+
+            // 更新座號卡上的印章視覺
+            const stampElement = document.getElementById(`stamp-${id}`);
+            if (stampElement) {
+                stampElement.classList.add('stamped');
+            }
+            const cardElement = document.getElementById(`seat-card-${id}`);
+            if (cardElement) {
+                cardElement.classList.add('opacity-80', 'bg-neutral-100');
+                cardElement.classList.remove('hover:bg-neutral-200');
+            }
+
+            // 亂數挑選死亡台詞
+            const randomIndex = Math.floor(Math.random() * deathSentences.length);
+            const rawSentence = deathSentences[randomIndex];
+            const finalSentence = rawSentence.replace('{id}', `【${id}號】`);
+
+            // 觸發打字機播報
+            triggerTypewriter(finalSentence);
+
+            // 寫入歷史公告欄
+            appendHistory(id, finalSentence);
+        }
+
+        // 4. 打字機動態效果控制
+        function triggerTypewriter(text) {
+            const outputElement = document.getElementById('ai-output');
+            
+            // 清除之前的打字機循環
+            if (typewriterInterval) {
+                clearInterval(typewriterInterval);
+            }
+
+            outputElement.innerText = '';
+            let index = 0;
+
+            typewriterInterval = setInterval(() => {
+                if (index < text.length) {
+                    outputElement.innerText += text.charAt(index);
+                    index++;
+                    // 模擬打字機喀噠音效
+                    if (Math.random() > 0.3) {
+                        AudioFX.playTypewriter();
+                    }
+                } else {
+                    clearInterval(typewriterInterval);
+                }
+            }, 75); // 打字速度（75毫秒一字）
+        }
+
+        // 5. 蓋章滿版動畫
+        function showStampAnimation(id) {
+            const modal = document.getElementById('stamp-modal');
+            const desc = document.getElementById('modal-desc-text');
+            
+            desc.innerText = `🚨 號外：偵悉 ${id} 號已遭不測 🚨`;
+            
+            // 瞬間亮起
+            modal.classList.remove('pointer-events-none');
+            modal.classList.add('opacity-100');
+            modal.firstElementChild.classList.remove('scale-75');
+            modal.firstElementChild.classList.add('scale-100');
+
+            // 1.2秒後淡出自動關閉
+            setTimeout(() => {
+                modal.classList.add('pointer-events-none');
+                modal.classList.remove('opacity-100');
+                modal.firstElementChild.classList.remove('scale-100');
+                modal.firstElementChild.classList.add('scale-75');
+            }, 1300);
+        }
+
+        // 6. 追加公告欄歷史紀錄
+        function appendHistory(id, text) {
+            const historyContainer = document.getElementById('history-log');
+            
+            // 若是第一次追加，先清空預設空白提示
+            if (historyContainer.querySelector('.text-gray-500')) {
+                historyContainer.innerHTML = '';
+            }
+
+            const logEntry = document.createElement('div');
+            logEntry.className = 'border-b border-gray-300 pb-2 mb-2 flex flex-col sm:flex-row sm:items-start gap-1 sm:gap-3 hover:bg-[#eae1cc]/50 p-1 rounded-sm transition-colors';
+            
+            // 時間戳
+            const now = new Date();
+            const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+            logEntry.innerHTML = `
+                <span class="text-xs bg-red-800 text-white font-mono px-2 py-0.5 rounded-sm inline-block self-start font-bold">${timeString}</span>
+                <span class="text-red-900 font-extrabold flex-shrink-0">【通緝/搜捕】</span>
+                <span class="text-neutral-800">${text}</span>
+            `;
+
+            // 倒序排列（最新在最上面）
+            historyContainer.insertBefore(logEntry, historyContainer.firstChild);
+        }
+
+        // 7. 更新存活與死亡統計
+        function updateCounters() {
+            const total = players.length;
+            const alive = players.filter(p => p.alive).length;
+            const counterElement = document.getElementById('alive-counter');
+            if (counterElement) {
+                counterElement.innerText = `生存情況：存活 ${alive} 人 / 已出局 ${total - alive} 人`;
+            }
+        }
+
+        // 8. 重設戰局回到輸入人數介面
+        function resetSetup() {
+            if (confirm("確認要結束這場對局，重新設定人數嗎？這將會清除現有進度。")) {
+                dayOffset = 0;
+                document.getElementById('setup-panel').classList.remove('hidden');
+                document.getElementById('game-panel').classList.add('hidden');
+                // 清空公告欄
+                document.getElementById('history-log').innerHTML = '<div class="text-gray-500 italic">尚未有任何通訊傳出。</div>';
+                updateDateDisplay();
+            }
+        }
+
+        // 預設日期初始化顯示
+        updateDateDisplay();
+    </script>
+</body>
+</html>
